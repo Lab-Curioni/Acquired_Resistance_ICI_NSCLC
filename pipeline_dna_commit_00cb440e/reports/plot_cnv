@@ -1,0 +1,101 @@
+#!/path/to/python/2.7.6/x86_64/bin/python2.7
+
+####
+#
+# Script to Plot commonly mutated cnvs colored by CN. 
+# To be called from the project root directory. 
+# Searches for all .overviewFiltered.txt files in subfolders/
+# Parameters    default         explanation
+# -input        "."             "subfolders to be searched in"
+# -ouput        reports/snv     "output-folder"
+# -thr          2               "minimal number of samples in which a gene needs to be mutated in order to be plottet.
+# -width        20              "width of the output plot"
+# -height       30              "height of the output plot"
+###
+
+import sys
+import os
+import glob
+import subprocess
+
+print "CNV plotter v0.1"
+
+class Cmd():
+    """
+    Interface for running commands from python.
+    """
+
+    def __init__(self, command):
+        self.command = command
+        self.returncode = None
+        self.process = subprocess.Popen(['/bin/sh', '-cl', command], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.pid = self.process.pid
+
+    def run(self):
+        output, error = self.process.communicate()
+        self.returncode = self.process.returncode
+        return output, error
+
+def make_list(data):
+    L = []
+    for line in data.split("\n"):
+        if line!="":
+            L.append(line)
+    return L
+
+def sample_from_fname(name):
+    return name.split("/")[-1].split("_vs_")[0]
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-input', action="store", dest="input", default=".")
+parser.add_argument('-output', action="store", dest="output", default="reports/cnv")
+parser.add_argument('-thr', action="store", type=int, dest="thr", default=2)
+parser.add_argument('-width', action="store", type=int, dest="width", default=20)
+parser.add_argument('-height', action="store", type=int, dest="height", default=30)
+args = parser.parse_args()
+
+print "Searching for CNVannotated.overviewFiltered files in: %s" % os.path.abspath(args.input)
+
+data, error = Cmd("find %s/. -name *overviewFiltered.txt" % (args.input)).run()
+data_files = make_list(data)
+
+if not os.path.exists(args.output):
+    os.makedirs(args.output)
+
+results = []
+count = {}
+for i, data_file in enumerate(data_files):
+    sample_name = sample_from_fname(data_file)
+    f = open(data_file)
+    r = f.readline()
+    r = f.readline()
+    while r:
+        r = r.replace("\n", "").replace("\r", "").split("\t")
+        if len(r)<5:
+	    r = f.readline()
+	    continue
+	impact = r[5]
+        genes = r[-1].split(";")
+        for gene_id in genes:
+            if gene_id=="":
+                continue
+            row = [sample_name, gene_id, impact]
+            results.append(row)
+            sample_set = count.get(gene_id, set())
+            sample_set.add(sample_name)
+            count[gene_id] = sample_set
+        r = f.readline()
+    f.close()
+
+fout = open(os.path.join(args.output, "cnv_data.tab"), "wt")
+fout.write("sample\tgene\tvariant_class\n")
+for row in results:
+    sample_name, gene_id, impact = row
+    if len(count[gene_id])>=args.thr:
+        fout.write("\t".join(row)+"\n")
+fout.close()
+
+print "Saving R plot: %s" % os.path.abspath(os.path.join(args.output, "cnv.pdf"))
+cmd = "export R_LIBS=/path/to/utilities/Rlibs3.3.0; module load r/3.3.0; R --vanilla --args %s %s %d %d < %s" % (os.path.abspath(os.path.join(args.output, "cnv_data.tab")), os.path.abspath(os.path.join(args.output, "cnv.pdf")), args.width, args.height, os.path.join(os.path.dirname(__file__), "plot_cnv.R"))
+output, error = Cmd(cmd).run()

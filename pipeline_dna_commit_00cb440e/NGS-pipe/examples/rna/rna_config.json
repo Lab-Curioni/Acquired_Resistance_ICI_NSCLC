@@ -1,0 +1,84 @@
+{
+    "trimmomatic":{
+        "call":"trimmomatic -Xmx12G",
+        "scratch":"10000",
+        "mem":"10000",
+        "time":"235",
+        "paired":{
+            "slidingwindow":"4",
+            "threads":"2",
+            "phred":"-phred33",
+            "mode":"PE",
+            "minQual":"2",
+            "rnaadapterfile":"resources/TruSeq2-PE.fa",
+            "seedmismatches":"1",
+            "palindrom":"30",
+            "min_adapt_len":"1",
+            "keep_both":"true",
+            "minlen":"50",
+            "score":"7"
+        },
+        "single":{
+            "slidingwindow":"4",
+            "threads":"2",
+            "phred":"-phred33",
+            "mode":"SE",
+            "minQual":"2",
+            "rnaadapterfile":"resources/TruSeq2-SE.fa",
+            "seedmismatches":"1",
+            "palindrom":"30",
+            "minlen":"50",
+            "score":"7"
+        }
+    },
+    "samtools":{
+        "call":"samtools ",
+        "flagstat":{
+            "scratch":"2000",
+            "mem": "4000",
+            "time": "20",
+            "threads": "1"
+        }
+    },
+    "fastqc": {
+        "call" : "fastqc ",
+        "scratch": "10000",
+        "mem": "10000",
+        "time": "60",
+        "threads": "1"
+    },
+    "star":{
+      "call" : "STAR ",
+      "readFilesCommand": "zcat",
+      "outFilterMultimapNmax": "20",
+      "outStd": "SAM",
+      "outSamUnmapped": "Within",
+      "outFilterMismatchNMAX": "5",
+      "scratch": "15000",
+      "mem": "15000",
+      "time": "235",
+      "threads": "4"
+    },
+    "featureCounts":{
+      "call": "featureCounts",
+      "scratch": "1000",
+      "mem": "1000",
+      "time": "30",
+      "threads": "12",
+      "parametersSingle": "-M --fraction -t gene -g gene_id -f",
+      "parametersPaired": "-M --fraction -p -t gene -g gene_id -f -s 2"
+    },
+    "featurecounts2HtSeq":{
+      "call": "python ../../snake/rna/fcnt2htseq.py ",
+      "scratch": "1000",
+      "mem": "1000",
+      "time": "10",
+      "threads": "1"
+    },
+    "countReadsInFastq":{
+      "scratch": "1000",
+      "mem": "1000",
+      "time": "60",
+      "threads": "1"
+    }
+}

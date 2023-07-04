@@ -1,0 +1,102 @@
+OUTDIR = ''
+
+
+f = open('SRP026648_run_info.txt', 'r')
+NAMES = []
+f.readline()
+for line in f:
+    NAMES.append(line.strip().split("\t")[4])
+f.close()
+
+
+def getShortId(wildcards):
+    return wildcards.id[0:6]
+
+
+rule all:
+    input:
+        expand(OUTDIR + 'fastq/{id}/PAIREDEND/{id}_1_R{mate}.fastq.gz', id = NAMES, mate={'1','2'}),
+        'resources/ucsc.hg19.fasta',
+        'resources/ucsc.hg19.fasta.fai',
+        'resources/ucsc.hg19.dict',
+        'resources/starIndexBuild.done',
+        'resources/Homo_sapiens.GRCh37.87.gatk.gtf',
+        'resources/TruSeq2-PE.fa',
+        'resources/TruSeq2-SE.fa'
+rule downloadFastq:
+    output: 
+        fq1 = OUTDIR + 'fastq/{id}/PAIREDEND/{id}_1_R{mate}.fastq.gz'
+    params:
+        shortId = getShortId,
+        lsfoutfile = 'fastq/{id}/PAIREDEND/{id}_1_R{mate}.fastq.download.out',
+        lsferrfile = 'fastq/{id}/PAIREDEND/{id}_1_R{mate}.fastq.download.err',
+        scratch = "2000",
+        mem = '2000',
+        time = '60'
+    shell: 
+        'mkdir -p fastq; mkdir -p fastq/{wildcards.id}; mkdir -p fastq/{wildcards.id}/PAIREDEND/; wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{params.shortId}/{wildcards.id}/{wildcards.id}_{wildcards.mate}.fastq.gz -O {output.fq1}'
+
+
+rule downloadReference:
+    output:
+        pe = 'resources/TruSeq2-PE.fa',
+        se = 'resources/TruSeq2-SE.fa',
+    params:
+        lsfoutfile = 'resources/adapters.lsfout.log',
+        lsferrfile = 'resources/adapters.lsferr.log',
+        scratch = '2000',
+        mem = '2000',
+        time = '20',
+    shell:
+         ('mkdir -p resources; cd resources; ' +
+         'wget https://github.com/timflutre/trimmomatic/blob/master/adapters/TruSeq2-PE.fa; ' +
+         'wget https://github.com/timflutre/trimmomatic/blob/master/adapters/TruSeq2-SE.fa;')
+
+rule downloadAdapters:
+    output:
+        fa = 'resources/ucsc.hg19.fasta',
+        fai = 'resources/ucsc.hg19.fasta.fai',
+        dict = 'resources/ucsc.hg19.dict'
+    params:
+        lsfoutfile = 'resources/ucsc.fasta.hg19.lsfout.log',
+        lsferrfile = 'resources/ucsc.fasta.hg19.lsferr.log',
+        scratch = '10000',
+        mem = '10000',
+        time = '60',
+    shell:
+         ('mkdir -p resources; cd resources; ' +
+         'wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/ucsc.hg19.fasta.gz; gunzip ucsc.hg19.fasta.gz; ' +
+         'wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/ucsc.hg19.fasta.fai.gz; gunzip ucsc.hg19.fasta.fai.gz; ' +
+         'wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/ucsc.hg19.dict.gz; gunzip ucsc.hg19.dict.gz;')
+
+rule createStarIndex:
+    input:
+        ref = 'resources/ucsc.hg19.fasta'
+    output:
+        out = touch('resources/starIndexBuild.done')
+    params:
+        lsfoutfile = 'resources/starIndexBuild.lsfout.log',
+        lsferrfile = 'resources/starIndexBuild.lsferr.log',
+        scratch = '5000',
+        mem = '5000',
+        time = '240'
+    conda:
+        'conda/star.yaml'
+    threads:
+        12
+    shell:
+        'STAR --runMode genomeGenerate --genomeDir resources --genomeFastaFiles {input.ref} --runThreadN {threads}'        
+
+rule downloadGTF:
+    output:
+        'resources/Homo_sapiens.GRCh37.87.gatk.gtf',
+    params:
+        lsfoutfile = 'resources/Homo_sapiens.GRCh37.87.gtf.lsfout.log',
+        lsferrfile = 'resources/Homo_sapiens.GRCh37.87.gtf.lsferr.log',
+        scratch = '1000',
+        mem = '1000',
+        time = '10',
+    shell:
+        ('mkdir -p resources; cd resources; ' +
+        'wget ftp://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz; gunzip Homo_sapiens.GRCh37.87.gtf.gz; '+
+        'awk \'{{if(($0 ! /^#/) && ($0 ! /^MT/)) print \"chr\"$0; else print $0}}\' Homo_sapiens.GRCh37.87.gtf > Homo_sapiens.GRCh37.87.gatk.gtf')

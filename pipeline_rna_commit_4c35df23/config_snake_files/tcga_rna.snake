@@ -1,0 +1,18 @@
+# The following is an example call of this file
+
+# /PATH/TO/SNAKEMAKE/bin/snakemake -s /PATH/TO/THIS/FILE/snake/example.snake --configfile /PATH/TO/CONFIG/snake/config.json -p --latency-wait 120 --cluster "<qsub/bsub>" -j 50 2>&1 | tee -a /PATH/TO/PROJECT/log.log
+
+SAMPLEMAPPING = "./sample.tsv"
+OUTDIR = "./out_dir/"
+ORGANISM = 'human'
+PAIREDEND = True
+FASTQDIR = './fastqs_rna/'
+
+# This function adapts the config object to include full path information
+include: "../snakefiles/rna_tcga_cohort_snake.py"
+
+localrules: all, tcga_rnaseq
+
+rule all:
+    input:
+        OUTDIR + 'rna_tcga_complete.txt'

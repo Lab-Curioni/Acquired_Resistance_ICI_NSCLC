@@ -1,0 +1,23 @@
+import os, glob, sys
+from snakemake.utils import R
+
+SAMPLEMAPPING = 'sample_mapping.tsv'
+FASTQDIR = 'sra/'
+OUTDIR   = 'out/'
+TMPDIR   = 'tmp/'
+
+ORGANISM = 'H_sapiens_hg19'
+
+CLIPTRIMOUT = FASTQDIR
+REMOVEPCRDUBLICATESOUT = OUTDIR + 'removed_pcr_dub/'
+MPILEUPIN = REMOVEPCRDUBLICATESOUT
+
+include: '../../snake/wes/wes_snake.py'
+
+SAMPLENAMES = getSampleNames()
+NORMALTUMORMATCHING = getNormalTumorFiles()
+
+rule SRA051153:
+    input:
+        expand(REMOVEPCRDUBLICATESOUT + '{sample}.bam_stats/report.pdf', sample = SAMPLENAMES),
+        expand(VARSCANSOMATICOUT + '{tumorNormalMatching}.snp.vcf', tumorNormalMatching = NORMALTUMORMATCHING)

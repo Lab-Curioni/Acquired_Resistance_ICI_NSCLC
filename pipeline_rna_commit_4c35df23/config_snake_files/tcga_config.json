@@ -1,0 +1,103 @@
+{
+	"general":{
+		"Star_sjdbOverhang": "150"
+	},
+	"resources":{
+		"human":{
+			"genomedir": "/path/to/utilities/indices/star/star2.4.2/hs37d5.gencode_19.overhang150/"
+		}
+	},
+	"tools":{
+		"STAR":{
+			"call": "STAR",
+			"scratch": "10000",
+			"mem": "12000",
+			"time": "240",
+			"threads": 8,
+			"variousParams": "--sjdbGTFfile /path/to/utilities/TCGA_RNAseq_v2/mRNAseq_TCGA/rsem_ref/unc_hg19.gtf --outFilterMultimapNmax 20 --alignIntronMax 500000 --outFilterMatchNminOverLread 0.33 --outFilterScoreMinOverLread 0.33 --outSAMstrandField intronMotif --outSAMunmapped None --outSAMtype None --readFilesCommand zcat --quantMode TranscriptomeSAM"
+			},
+		"RSEM_calc_expr":{
+			"call": "rsem-calculate-expression",
+			"scratch": "10000",
+			"mem": "12000",
+			"time": "200",
+			"threads": 4,
+			"reference": "/path/to/utilities/TCGA_RNAseq_v2/mRNAseq_TCGA/rsem_ref/hg19_M_rCRS_ref",
+			"variousParams": "--strandedness reverse --paired-end --estimate-rspd "
+			},
+		"strip_trailing_tabs":{
+			"call": " perl /path/to/utilities/TCGA_RNAseq_v2/mRNAseq_TCGA/strip_trailing_tabs.pl",
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 4
+			},
+		"prune_isoforms":{
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 1
+			},
+		"normalize_gene_quant":{
+			"call": "perl /path/to/utilities/TCGA_RNAseq_v2/mRNAseq_TCGA/quartile_norm.pl",
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 1,
+			"variousParams": "-c 5 -q 75"
+			},
+		"change_header":{
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 1
+			},
+		"parse_cohort_comparison":{
+			"call": "Rscript --vanilla /path/to/pipeline_rna/scripts/parse_rna_tcga_pat_data.r",
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 4,
+			"cohort": "/path/to/utilities/databases/TCGA_cohorts/TCGA_SKCM_rnaseqV2_RSEM_genes_normalized.txt"
+			},
+		"remove_questionmark":{
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 1
+			},
+		"filter_genesOfInterest":{
+			"call": "python3 /path/to/pipeline_rna/scripts/filter_genesOfInterest_by_list.py",
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 4,
+			"genelist": "/path/to/mtbz/Anne_test/snakemake_test_no_conda/final_output/TEST_clinical_list_genes_tcga_cohort.txt"
+			},
+		"boxplot_expression_value":{
+			"call": "/path/to/pipeline_rna/scripts/variant_expression_context.TCGA.list_of_genes.R",
+			"scratch": "2000",
+			"mem": "2000",
+			"time": "200",
+			"threads": 4,
+			"cohort": "/path/to/utilities/databases/TCGA_cohorts/TCGA_SKCM_rnaseqV2_RSEM_genes_normalized.txt"
+			},
+		"queryDGIDB":{
+			"call": "module load new r/3.4.0; module load eth_proxy; Rscript /path/to/pipeline_rna/scripts/Query_DGIdb_Script_v1.r ",
+			"scratch": "2000",
+			"mem": "200",
+			"time": "500",
+			"threads": 24,
+			"colName_genes": "gene",
+			"minDatabaseNum": 2
+			},
+		"add_dgidb_column":{
+			"call": "python /path/to/pipeline_rna/scripts/add_dgidbquery_column.py ",
+			"scratch": "1000",
+			"mem": "200",
+			"time": "500",
+			"threads": 4,
+			"hgncCol": "gene"
+			}
+	}
+}

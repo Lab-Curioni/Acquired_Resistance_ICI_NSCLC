@@ -1,0 +1,72 @@
+#!/path/to/python/2.7.6/x86_64/bin/python2.7
+
+import sys
+import os
+import glob
+import subprocess
+
+class Cmd():
+    """
+    Interface for running commands from python.
+    """
+
+    def __init__(self, command):
+        self.command = command
+        self.returncode = None
+        self.process = subprocess.Popen(['/bin/sh', '-cl', command], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.pid = self.process.pid
+
+    def run(self):
+        output, error = self.process.communicate()
+        self.returncode = self.process.returncode
+        return output, error
+
+def sample_from_fname(name):
+    return name.split("/")[-1].split("_pileup")[0]
+
+def make_list(data):
+    L = []
+    for line in data.split("\n"):
+        if line!="":
+            L.append(line)
+    return L
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-input', action="store", dest="input", default=".")
+parser.add_argument('-output', action="store", dest="output", default="reports/concordance")
+parser.add_argument('-thr', action="store", type=int, dest="thr", default=2)
+args = parser.parse_args()
+
+print "Searching for _pileup files in: %s" % os.path.abspath(args.input)
+data, error = Cmd("find %s/. -name *_pileup | grep 'conpair/'" % (args.input)).run()
+files = make_list(data)
+
+if not os.path.exists(args.output):
+    os.makedirs(args.output)
+
+cmd = []
+cmd.append("export CONPAIR_DIR=/path/to/utilities/sharedPrograms/Conpair-master")
+cmd.append("export GATK_JAR=/path/to/gatk/3.7/x86_64/GenomeAnalysisTK.jar")
+cmd.append("export PYTHONPATH=${PYTHONPATH}:/path/to/utilities/sharedPrograms/Conpair-master/modules")
+
+all_pairs = len(files) * len(files)
+current = 0
+for i in files:
+  sample_i = sample_from_fname(i)
+  for j in files:
+    sample_j = sample_from_fname(j)
+    current += 1.0
+    print "%.2f%% done: processing %s vs %s" % (current/all_pairs * 100, sample_i, sample_j)
+    i_abs = os.path.abspath(i)
+    j_abs = os.path.abspath(j)
+    output_fname = os.path.abspath(os.path.join(args.output, "%s_%s_concordance.txt" % (sample_i, sample_j)))
+    if not os.path.exists(output_fname):
+        final_command = "/path/to/utilities/sharedPrograms/Conpair-master/scripts/verify_concordance.py --markers /path/to/utilities/sharedPrograms/Conpair-master/data/markers/with_chr/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt -T %s -N %s -H --outfile %s" % (i_abs, j_abs, output_fname)
+        output, error = Cmd("; ".join(cmd + [final_command])).run()
+
+print "Plotting concordance to: %s" % os.path.join(os.path.abspath(args.output), "concordance.pdf")
+sample_names = [sample_from_fname(e) for e in files]
+sample_names = ",".join(sample_names)
+cmd = "export R_LIBS=/path/to/utilities/Rlibs3.3.0; module load r/3.3.0; R --vanilla --args %s %s < %s" % (sample_names, os.path.abspath(args.output), os.path.join(os.path.dirname(__file__), "concordance.R"))
+output, error = Cmd(cmd).run()

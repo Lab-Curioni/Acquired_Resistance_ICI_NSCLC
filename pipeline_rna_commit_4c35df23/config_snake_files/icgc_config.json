@@ -1,0 +1,158 @@
+{
+    "general":{
+	"__comment_qorts":"Strandedness_qorts: empty if unstranded, else --stranded",
+	"__comment_picard":"Possible values: {NONE, FIRST_READ_TRANSCRIPTION_STRAND, SECOND_READ_TRANSCRIPTION_STRAND}",
+	"__comment_strandedness":"HTseq possible values: {yes, no, reverse}",
+	"Star_sjdbOverhang":"150",
+	"strandedness":"no",
+	"picard_strand":"NONE",
+	"strandedness_qorts":""
+	},
+    "resources":{
+        "human":{
+        	"genomedir": "/path/to/utilities/indices/star/star2.4.2/hs37d5.gencode_19.overhang150/",
+        	"ref_flat": "/path/to/utilities/references/Hsap_GRCh37/RNA/gencode.v19.annotation.hs37d5_chr.gp",
+        	"annotation":"/path/to/utilities/references/Hsap_GRCh37/RNA/gencode.v19.annotation.hs37d5_chr.gtf",
+        	"refgene": "/path/to/utilities/references/Hsap_GRCh37/RNA/gencode.v19.annotation.hs37d5_chr.bed",
+        	"genomefasta": "/path/to/utilities/references/Hsap_GRCh37/RNA/genome.hs37d5.fa"
+        },
+	"mouse":{
+                "genomedir": "indices/star2.4.0/",
+                "ref_flat": "Mus_musculus.GRCm38.84.gp",
+                "annotation":"gencode.vM10.annotation.gtf",
+                "refgene": "Mus_musculus.GRCm38.84.bed"
+},
+	"rat":{
+       		"genomedir": "indices/star2.4.0/",
+        	"ref_flat": "Rattus_norvegicus.Rnor_6.0.89.gp",
+        	"annotation":"Rattus_norvegicus.Rnor_6.0.89.gtf",
+        	"refgene": "Rattus_norvegicus.Rnor_6.0.89.bed"
+        }
+
+    },
+    "tools":{
+        "STAR":{
+        	"call":"STAR", 
+		"scratch": "10000",
+        	"mem": "7000",
+        	"time": "240",
+       		"threads": 8,
+		"variousParams": "--outFilterMultimapScoreRange 1 --outFilterMultimapNmax 20 --outFilterMismatchNmax 10 --alignIntronMax 500000 --alignMatesGapMax 1000000 --sjdbScore 2 --alignSJDBoverhangMin 1 --genomeLoad NoSharedMemory --readFilesCommand zcat --outFilterMatchNminOverLread 0.33 --outFilterScoreMinOverLread 0.33 --outSAMstrandField intronMotif --outSAMmode Full --limitBAMsortRAM 7000000000 --outSAMattributes NH HI NM MD AS XS --outSAMunmapped Within --outSAMtype BAM Unsorted SortedByCoordinate --outSAMheaderHD @HD VN:1.4 "
+        	},
+	"fastqc":{
+		"call": "fastqc",
+		   "scratch": "2000",
+                "mem": "2000",
+                "time": "100",
+                "threads": 8
+	},
+	"warnings":{
+		"scratch": "2000",
+                "mem": "2000",
+                "time": "100",
+                "threads": "8"
+	},
+	"plots_stats":{
+		"gc_plot":"/path/to/linda/git_eth/pipeline_rna/scripts/gc_plot.r",
+		"generate_readStats":"/path/to/linda/git_eth/pipeline_rna/scripts/generate_readStats_table.SE.py",
+		"genebody_coverage":"/path/to/linda/git_eth/pipeline_rna/scripts/gene_body_coverage.r"
+		},
+        "samtools":{
+            "call":"samtools",
+            "index":{
+                "scratch": "2000",
+                "mem": "2000",
+                "time": "100",
+                "threads": 8
+            	}
+            },
+        "picard":{
+            "call": "picard -Xmx10G",
+            "CollectRnaSeqMetrics":{
+                "threads": 8,
+                "mem": "12000",
+                "time": "120",
+                "scratch": "12000"
+            	}
+		},
+	"htseq":{
+		"call":"htseq-count ",
+		"threads":8,
+                "mem":"8000",
+                "time":"300",
+                "scratch":"12000"
+	},
+        "getHgncSymbols":{
+		"call": "module load eth_proxy; Rscript /path/to/anne/nexusGit/pipeline_rna/scripts/get_hgncsymbols_from_ensemblID.R",
+		"scratch": "2000",
+		"mem": "2000",
+		"time": "200",
+		"threads": 4
+		},
+        "filter_genesOfInterest":{
+		"call": "python3 /path/to/anne/nexusGit/pipeline_rna/scripts/filter_genesOfInterest_by_list.py",
+		"scratch": "2000",
+		"mem": "2000",
+		"time": "200",
+		"threads": 4,
+		"genelist": "clinical_gene_list_melanoma_corrected_grouped.txt"
+		},
+	"rseqc":{
+		"bamstat":{
+            		"call": "module load python/2.7.6; python2.7 /path/to/python/2.7.6/x86_64/bin/bam_stat.py ",
+            		"threads": 8,
+                	"mem": "2000",
+                	"time": "120",
+                	"scratch": "12000"
+  	          	},
+		"read_gc":{
+                        "call": "module load python/2.7.6; python2.7 /path/to/python/2.7.6/x86_64/bin/read_GC.py ",
+                        "threads": 8,
+                        "mem": "2000",
+                        "time": "120",
+                        "scratch": "12000"
+                        },
+  		"geneBodyCoverage":{
+                        "call": "module load python/2.7.6; python2.7 /path/to/python/2.7.6/x86_64/bin/geneBody_coverage.py ",
+                        "threads": 8,
+                        "mem": "12000",
+                        "time": "500",
+                        "scratch": "12000"
+                        }
+		},
+	"qorts":{
+		"call": "qorts -Xmx10G",
+		"threads": 8,
+                "mem": "10000",
+                "time": "300",
+                "scratch": "12000",
+		"plot":"/path/to/linda/git_eth/pipeline_rna/scripts/qorts_genebody_coverage.r"
+		},
+	"fusioncatcher":{
+		"call": "module purge; module load python/2.7.6; module load samtools; module load eth_proxy; /path/to/utilities/sharedPrograms/fusioncatcher/bin/fusioncatcher",
+		"threads": 4,
+                "mem": "32000",
+                "time": "1440",
+                "scratch": "700000",
+		"configfile": "/path/to/utilities/sharedPrograms/fusioncatcher/configuration.cfg"
+		},
+	"arriba":{
+		"call": "/path/to/utilities/sharedPrograms/arriba/arriba_v0.12.0/run_arriba_adjusted_samtools_syntax.sh",
+		"threads": 8,
+                "mem": "11000",
+                "time": "800",
+                "scratch": "70000",
+		"blacklist": "/path/to/utilities/sharedPrograms/arriba/arriba_v0.12.0/database/blacklist_hg19_hs37d5_GRCh37_2018-01-13.tsv.gz"
+		},
+	"star_fusion":{
+		"call": "source deactivate; source activate /path/to/utilities/sharedPrograms/STAR-Fusion-v1.4.0/ ; STAR-Fusion ",
+		"threads": 12,
+                "mem": "11000",
+                "time": "800",
+                "scratch": "10000",
+		"star_genomedir": "
+		}
+
+        }
+   }
+

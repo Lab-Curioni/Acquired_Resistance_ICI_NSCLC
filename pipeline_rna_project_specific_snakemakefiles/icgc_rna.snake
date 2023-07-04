@@ -1,0 +1,18 @@
+# The following is an example call of this file
+
+# /PATH/TO/SNAKEMAKE/bin/snakemake -s /PATH/TO/THIS/FILE/snake/example.snake --configfile /PATH/TO/CONFIG/snake/config.json -p --latency-wait 120 --cluster "<qsub/bsub>" -j 50 2>&1 | tee -a /PATH/TO/PROJECT/log.log
+
+SAMPLEMAPPING = "/path/to/curioni/hiltbrunner_resistancePilotPart2_2018/snake_rna/rnaseq.tsv"
+OUTDIR = "/path/to/curioni/hiltbrunner_resistancePilotPart2_2018/out_rna/"
+ORGANISM = 'human'
+PAIREDEND = True
+FASTQDIR = '/path/to/curioni/hiltbrunner_resistancePilotPart2_2018/fastqs_rna_sortmeRNA/'
+
+# This function adapts the config object to include full path information
+include: "pipeline_rna/snakefiles/icgc_snake.py"
+
+localrules: all, rnaseq
+
+rule all:
+    input:
+        OUTDIR + 'icgc_complete.txt'

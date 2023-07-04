@@ -1,0 +1,20 @@
+# The following is an example call of this file.
+# /PATH/TO/SNAKEMAKE/bin/snakemake -s /PATH/TO/NGS-PIPE/snake/example.snake --configfile /PATH/TO/NGS-PIPE/snake/config.json -p --latency-wait 120 --cluster "<qsub/bsub>" -j 50 2>&1 | tee -a /PATH/TO/PROJECT/log.log
+
+
+SAMPLEMAPPING = '/path/to/curioni/hiltbrunner_resistancePilotPart2_2018/snake_genome/sample_map2.wgs.tsv'
+TOOLSDIR = '/path/to/utilities/sharedPrograms/MTBZpipe/NGS-Pipe/resources/tools/'
+RESOURCEDIR = '/path/to/utilities/sharedPrograms/MTBZpipe/NGS-Pipe/resources/data/'
+FASTQDIR = '/path/to/curioni/hiltbrunner_resistancePilotPart2_2018/fastqs_genome_secondround/'
+OUTDIR   = '/path/to/curioni/hiltbrunner_resistancePilotPart2_2018/out_genome_secondround/'
+TMPDIR   = '/path/to/curioni/hiltbrunner_resistancePilotPart2_2018/tmp_genome/'
+WHICHCLIP = True
+
+ORGANISM = 'H_sapiens_hg19'
+
+include: 'pipeline_dna.wgs_snake.py'
+
+localrules: all,wgs
+rule all:
+    input:
+        OUTDIR + 'complete.txt'

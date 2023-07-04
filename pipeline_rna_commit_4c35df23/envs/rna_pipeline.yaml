@@ -1,0 +1,12 @@
+name: rna_pipeline
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - snakemake=4.8.0
+  - fastqc=0.11.7
+  - samtools=1.8
+  - picard=2.18
+  - star=2.5.4a
+  - qorts=1.3.0
