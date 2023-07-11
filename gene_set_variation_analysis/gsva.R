@@ -16,7 +16,7 @@ gene_sets=getGmt(gene_sets_gmt)
 
 selected_gene_sets = c('HALLMARK_ANGIOGENESIS','HALLMARK_APOPTOSIS', 'HALLMARK_DNA_REPAIR', 'HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION', 'HALLMARK_GLYCOLYSIS', 'HALLMARK_IL2_STAT5_SIGNALING', 'HALLMARK_IL6_JAK_STAT3_SIGNALING', 'HALLMARK_INFLAMMATORY_RESPONSE','HALLMARK_INTERFERON_ALPHA_RESPONSE', 'HALLMARK_INTERFERON_GAMMA_RESPONSE','HALLMARK_KRAS_SIGNALING_DN', 'HALLMARK_KRAS_SIGNALING_UP', 'HALLMARK_WNT_BETA_CATENIN_SIGNALING', 'HALLMARK_TNFA_SIGNALING_VIA_NFKB');
 
-gene_counts_dir = '/cluster/project/nexus/curioni/hiltbrunner_resistancePilotPart2_2018/out_rna/gene_counts/'
+gene_counts_dir = paste0(project_dir, 'out_rna/gene_counts/')
 gene_counts_suffix = '_RNA_non_rRNA.htseq_counts.txt' 
 samples = c('BB_before', 'BB_resistance', 'VA_before', 'VA_resistance')
 
